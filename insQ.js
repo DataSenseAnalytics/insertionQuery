@@ -12,10 +12,6 @@ var insertionQ = (function () {
             strictlyNew: true,
             timeout: 20
         };
-    
-    // determine if timeout is required in order register event listener immediately
-    // after animation is attached
-    const isTimeoutRequired = (options.timeout > 0);
 
     if (elm.style.animationName) {
         isAnimationSupported = true;
@@ -50,29 +46,32 @@ var insertionQ = (function () {
             "\n" + selector + ' { animation-duration: 0.001s; animation-name: ' + animationName + '; ' +
             keyframeprefix + 'animation-duration: 0.001s; ' + keyframeprefix + 'animation-name: ' + animationName + '; ' +
             ' } ';
-
         document.head.appendChild(styleAnimation);
-
-        const registerEventListeners = function() {
+        var registerEventListeners = function() {
             document.addEventListener('animationstart', eventHandler, false);
             document.addEventListener('MSAnimationStart', eventHandler, false);
             document.addEventListener('webkitAnimationStart', eventHandler, false);
         }
-        
-        if(isTimeoutRequired) {
+
+        // determine if timeout is required in order register event listener immediately
+        // after animation is attached
+        var isTimeoutRequired = function() {
+           return options.timeout > 0; 
+        }
+
+        if(isTimeoutRequired()) {
             //event support is not consistent with DOM prefixes
             //starts listening later to skip elements found on startup. this might need tweaking
             var bindAnimationLater = setTimeout(function () {
                 registerEventListeners();
             }, options.timeout);
-        }
-        else {
+        } else {
             registerEventListeners();
         }
 
         return {
             destroy: function () {
-                isTimeoutRequired && clearTimeout(bindAnimationLater);
+                isTimeoutRequired() && clearTimeout(bindAnimationLater);
                 if (styleAnimation) {
                     document.head.removeChild(styleAnimation);
                     styleAnimation = null;
